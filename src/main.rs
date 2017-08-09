@@ -13,6 +13,7 @@ use viewport::Viewport;
 
 const POINT_SIZE: f64 = 5.0;
 const PI: f64 = 3.14159265358979323;
+const MOVE_STEP: f64 = 2.0;
 
 struct Position<T: Num + Into<f64>> {
     x: T,
@@ -93,26 +94,43 @@ fn main() {
 
     let mut events = Events::new(EventSettings::new());
 
+    let mut left_down = false;
+    let mut right_down = false;
+    let mut up_down = false;
+    let mut down_down = false;
+    let mut move_it = false;
+
     while let Some(e) = events.next(&mut window) {
         match e {
             Input::Render(r) => render(r.viewport(), &mut gl, &players),
-            Input::Press(Button::Keyboard(Key::Right)) => {
-                players[0].position.x += 5.0;
-                players[0].direction = -90.0 / 180.0 * PI;
-            },
-            Input::Press(Button::Keyboard(Key::Left)) => {
-                players[0].position.x -= 5.0;
-                players[0].direction = 90.0 / 180.0 * PI;
-            },
-            Input::Press(Button::Keyboard(Key::Down)) => {
-                players[0].position.y += 5.0;
-                players[0].direction = 0.0 / 180.0 * PI;
-            }
-            Input::Press(Button::Keyboard(Key::Up)) => {
-                players[0].position.y -= 5.0;
-                players[0].direction = 180.0 / 180.0 * PI;
+            Input::Press(Button::Keyboard(Key::Right)) => right_down = true,
+            Input::Release(Button::Keyboard(Key::Right)) => right_down = false,
+            Input::Press(Button::Keyboard(Key::Left)) => left_down = true,
+            Input::Release(Button::Keyboard(Key::Left)) => left_down = false,
+            Input::Press(Button::Keyboard(Key::Down)) => down_down = true,
+            Input::Release(Button::Keyboard(Key::Down)) => down_down = false,
+            Input::Press(Button::Keyboard(Key::Up)) => up_down = true,
+            Input::Release(Button::Keyboard(Key::Up)) => up_down = false,
+
+            Input::Update(_) if move_it => {
+                players[0].position.x -= players[0].direction.sin() * MOVE_STEP;
+                players[0].position.y += players[0].direction.cos() * MOVE_STEP;
             },
             _ => (),
         }
+
+        move_it = true;
+        match (left_down, right_down, up_down, down_down) {
+            (false, false, false,  true) => players[0].direction = 0.0 / 180.0 * PI,
+            (false, true,  false,  true) => players[0].direction = -45.0 / 180.0 * PI,
+            (true,  false, false,  true) => players[0].direction = 45.0 / 180.0 * PI,
+            (false, false, true,  false) => players[0].direction = 180.0 / 180.0 * PI,
+            (false, true,  true,  false) => players[0].direction = -135.0 / 180.0 * PI,
+            (true,  false, true,  false) => players[0].direction = 135.0 / 180.0 * PI,
+            (false, true,  false, false) => players[0].direction = -90.0 / 180.0 * PI,
+            (true,  false, false, false) => players[0].direction = 90.0 / 180.0 * PI,
+            (_, _, _, _) => move_it = false, 
+        }
+
     }
 }
