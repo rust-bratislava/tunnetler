@@ -12,6 +12,7 @@ use num_traits::Num;
 use viewport::Viewport;
 
 const POINT_SIZE: f64 = 5.0;
+const PI: f64 = 3.14159265358979323;
 
 struct Position<T: Num + Into<f64>> {
     x: T,
@@ -51,6 +52,8 @@ impl<T: Num + Into<f64> + Copy> Player<T> {
 
 fn render<T: Num + Into<f64> + Copy>(viewport: Viewport, gl: &mut GlGraphics, players: &[Player<T>]) {
     gl.draw(viewport, |c, gl| {
+        graphics::clear([0.0, 0.0, 0.0, 1.0], gl);
+
         for player in players {
             player.draw(c, gl);
         }
@@ -62,6 +65,7 @@ fn main() {
     use piston::input::Input;
     use piston::event_loop::{Events, EventSettings};
     use glutin_window::GlutinWindow as Window;
+    use piston::input::{Button, Key};
 
     let opengl = OpenGL::V3_2;
 
@@ -79,7 +83,7 @@ fn main() {
 
     let mut gl = GlGraphics::new(opengl);
 
-    let players = [Player {
+    let mut players = [Player {
         position: Position {
             x: 100.0,
             y: 100.0,
@@ -92,6 +96,22 @@ fn main() {
     while let Some(e) = events.next(&mut window) {
         match e {
             Input::Render(r) => render(r.viewport(), &mut gl, &players),
+            Input::Press(Button::Keyboard(Key::Right)) => {
+                players[0].position.x += 5.0;
+                players[0].direction = -90.0 / 180.0 * PI;
+            },
+            Input::Press(Button::Keyboard(Key::Left)) => {
+                players[0].position.x -= 5.0;
+                players[0].direction = 90.0 / 180.0 * PI;
+            },
+            Input::Press(Button::Keyboard(Key::Down)) => {
+                players[0].position.y += 5.0;
+                players[0].direction = 0.0 / 180.0 * PI;
+            }
+            Input::Press(Button::Keyboard(Key::Up)) => {
+                players[0].position.y -= 5.0;
+                players[0].direction = 180.0 / 180.0 * PI;
+            },
             _ => (),
         }
     }
